@@ -1,0 +1,45 @@
+pragma solidity ^0.8.0;
+
+contract KadoCoin {
+    string public name = "KadoCoin";
+    string public symbol = "KDC";
+    uint8 public decimals = 18;
+    uint256 public totalSupply = 20000000 * 10**uint256(decimals);
+
+    mapping(address => uint256) public balanceOf;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Purchase(address indexed buyer, uint256 amount);
+
+    constructor() {
+        balanceOf[msg.sender] = totalSupply;
+    }
+
+    function transfer(address to, uint256 value) public returns (bool) {
+        require(balanceOf[msg.sender] >= value, "Insufficient balance");
+
+        balanceOf[msg.sender] -= value;
+        balanceOf[to] += value;
+
+        emit Transfer(msg.sender, to, value);
+        return true;
+    }
+
+    function purchase(uint256 amount) public payable {
+        uint256 cost = amount * 1 ether; // 1 KadoCoin = 1 ether
+
+        require(msg.value >= cost, "Insufficient funds");
+
+        balanceOf[msg.sender] += amount;
+        balanceOf[address(this)] -= amount;
+
+        emit Transfer(address(this), msg.sender, amount);
+        emit Purchase(msg.sender, amount);
+    }
+
+    function withdrawFunds() public {
+        require(balanceOf[address(this)] == 0, "Contract balance is not empty");
+        uint256 amount = address(this).balance;
+        payable(msg.sender).transfer(amount);
+    }
+}
